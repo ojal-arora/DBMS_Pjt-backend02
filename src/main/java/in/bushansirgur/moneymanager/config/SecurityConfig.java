@@ -31,28 +31,39 @@ public class SecurityConfig {
     private final AppUserDetailsService appUserDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
 
-    @Value("${money.manager.frontend.url}")
+    @Value("${money.manager.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
-                                "/status",
-                                "/health",
-                                "/register",
-                                "/activate",
-                                "/login"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(Customizer.withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
 
-        return httpSecurity.build();
+                // ✅ ALLOW HEALTH CHECKS (VERY IMPORTANT)
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/health", "/status").permitAll()
+
+                // ✅ ALLOW AUTH ENDPOINTS
+                .requestMatchers(
+                        "/register",
+                        "/activate",
+                        "/login"
+                ).permitAll()
+
+                // ✅ ALLOW OPTIONS (CORS preflight)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // ❗ EVERYTHING ELSE NEEDS JWT
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
@@ -76,7 +87,6 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 
