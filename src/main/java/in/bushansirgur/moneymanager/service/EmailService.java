@@ -2,16 +2,11 @@ package in.bushansirgur.moneymanager.service;
 
 import org.springframework.stereotype.Component;
 
-/**
- * Dummy EmailService for production (Render).
- * Prevents JavaMailSender startup crash.
- */
 @Component
 public class EmailService {
 
     public void sendEmail(String to, String subject, String body) {
-        // EMAIL DISABLED ON RENDER
-        System.out.println("Email skipped (Render): " + subject);
+        System.out.println("Email disabled on Render");
     }
 
     public void sendEmailWithAttachment(
@@ -21,7 +16,6 @@ public class EmailService {
             byte[] attachment,
             String filename
     ) {
-        // EMAIL DISABLED ON RENDER
-        System.out.println("Email with attachment skipped (Render): " + subject);
+        System.out.println("Email attachment disabled on Render");
     }
 }
