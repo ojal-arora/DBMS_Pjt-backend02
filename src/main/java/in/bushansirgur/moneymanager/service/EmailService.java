@@ -3,8 +3,8 @@ package in.bushansirgur.moneymanager.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -12,33 +12,26 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(
-        name = "spring.mail.host",
-        matchIfMissing = true
-)
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final ObjectProvider<JavaMailSender> mailSenderProvider;
 
-    @Value("${spring.mail.properties.mail.smtp.from:}")
+    @Value("${spring.mail.properties.mail.smtp.from:no-reply@example.com}")
     private String fromEmail;
 
     public void sendEmail(String to, String subject, String body) {
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
             return;
         }
 
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        mailSender.send(message);
     }
 
     public void sendEmailWithAttachment(
@@ -49,6 +42,7 @@ public class EmailService {
             String filename
     ) throws MessagingException {
 
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
             return;
         }
