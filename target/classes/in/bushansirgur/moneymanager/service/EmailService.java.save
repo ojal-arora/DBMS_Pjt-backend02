@@ -9,10 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;   // ← ADD THIS
-
 @Service
-@ConditionalOnProperty(name = "spring.mail.host")
 @RequiredArgsConstructor
 public class EmailService {
 
@@ -20,7 +17,8 @@ public class EmailService {
 
     @Value("${spring.mail.properties.mail.smtp.from}")
     private String fromEmail;
-   public void sendEmail(String to, String subject, String body) {
+
+    public void sendEmail(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
