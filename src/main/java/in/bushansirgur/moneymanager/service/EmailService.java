@@ -22,7 +22,10 @@ public class EmailService {
 
     public void sendEmail(String to, String subject, String body) {
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailSender == null) return;
+        if (mailSender == null) {
+            // Email disabled on Render – skip safely
+            return;
+        }
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
@@ -41,7 +44,9 @@ public class EmailService {
     ) throws MessagingException {
 
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailSender == null) return;
+        if (mailSender == null) {
+            return;
+        }
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
