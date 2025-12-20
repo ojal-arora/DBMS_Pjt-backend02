@@ -1,38 +1,17 @@
 package in.bushansirgur.moneymanager.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-@RequiredArgsConstructor
+/**
+ * Dummy EmailService for production (Render).
+ * Prevents JavaMailSender startup crash.
+ */
+@Component
 public class EmailService {
 
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
-
-    @Value("${spring.mail.properties.mail.smtp.from:no-reply@example.com}")
-    private String fromEmail;
-
     public void sendEmail(String to, String subject, String body) {
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailSender == null) {
-            // Email disabled on Render – skip safely
-            return;
-        }
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        mailSender.send(message);
+        // EMAIL DISABLED ON RENDER
+        System.out.println("Email skipped (Render): " + subject);
     }
 
     public void sendEmailWithAttachment(
@@ -41,20 +20,8 @@ public class EmailService {
             String body,
             byte[] attachment,
             String filename
-    ) throws MessagingException {
-
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailSender == null) {
-            return;
-        }
-
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(fromEmail);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(body);
-        helper.addAttachment(filename, new ByteArrayResource(attachment));
-        mailSender.send(message);
+    ) {
+        // EMAIL DISABLED ON RENDER
+        System.out.println("Email with attachment skipped (Render): " + subject);
     }
 }
