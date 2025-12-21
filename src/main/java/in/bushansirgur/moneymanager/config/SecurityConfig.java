@@ -36,7 +36,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
@@ -45,19 +44,23 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
 
-                // ✅ PUBLIC ENDPOINTS
+                // ✅ CORS preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // ✅ HEALTH / STATUS (Render + browser checks)
                 .requestMatchers(
                         "/",
-                        "/login",
-                        "/register",
-                        "/activate",
                         "/status",
                         "/health",
                         "/actuator/**"
                 ).permitAll()
 
-                // ✅ CORS PREFLIGHT
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // ✅ AUTH endpoints
+                .requestMatchers(
+                        "/login",
+                        "/register",
+                        "/activate"
+                ).permitAll()
 
                 // 🔒 EVERYTHING ELSE NEEDS JWT
                 .anyRequest().authenticated()
@@ -81,7 +84,7 @@ public class SecurityConfig {
                 "http://localhost:*",
                 "http://127.0.0.1:*"
         ));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
