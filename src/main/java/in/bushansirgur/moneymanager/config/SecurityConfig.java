@@ -3,10 +3,8 @@ package in.bushansirgur.moneymanager.config;
 import in.bushansirgur.moneymanager.security.JwtRequestFilter;
 import in.bushansirgur.moneymanager.service.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -21,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.List;
 
@@ -31,39 +30,32 @@ public class SecurityConfig {
     private final AppUserDetailsService appUserDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
 
-    @Value("${money.manager.frontend.url:http://localhost:3000}")
-    private String frontendUrl;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
             .authorizeHttpRequests(auth -> auth
 
-                // ✅ CORS preflight
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // ✅ HEALTH / STATUS (Render + browser checks)
+                // 🔓 PUBLIC ENDPOINTS
                 .requestMatchers(
                         "/",
-                        "/status",
+                        "/login",
+                        "/register",
+                        "/activate",
                         "/health",
+                        "/status",
                         "/actuator/**"
                 ).permitAll()
 
-                // ✅ AUTH endpoints
-                .requestMatchers(
-                        "/login",
-                        "/register",
-                        "/activate"
-                ).permitAll()
+                // 🔓 CORS PREFLIGHT
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // 🔒 EVERYTHING ELSE NEEDS JWT
+                // 🔐 EVERYTHING ELSE NEEDS JWT
                 .anyRequest().authenticated()
+            )
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -76,28 +68,23 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(appUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(provider);
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-                frontendUrl,
-                "https://*.vercel.app",
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-        ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(appUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(provider);
     }
 }
